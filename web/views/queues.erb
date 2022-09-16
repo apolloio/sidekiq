@@ -1,35 +1,54 @@
 <h3><%= t('Queues') %></h3>
-
 <div class="table_container">
+  <style>
+    .btn-warning {
+      color: #fff !important;
+      background-color: #cc8015 !important;
+      border-color: #eea236 !important;
+      background-image: none !important;
+    }
+
+    .label-warning {
+      background-color: #cc8015 !important;
+    }
+  </style>
   <table class="queues table table-hover table-bordered table-striped table-white">
     <thead>
       <th><%= t('Queue') %></th>
       <th><%= t('Size') %></th>
       <th><%= t('Latency') %></th>
-      <th><%= t('Actions') %></th>
+      <th class="col-md-3"><%= t('Actions') %></th>
     </thead>
     <% @queues.each do |queue| %>
       <tr>
         <td>
           <a href="<%= root_path %>queues/<%= CGI.escape(queue.name) %>"><%= h queue.name %></a>
           <% if queue.paused? %>
-            <span class="label label-danger"><%= t('Paused') %></span>
+            <span class="label label-warning"><%= t('Paused') %></span>
+          <% end %>
+          <% if queue.is_non_work_hour_only? %>
+            <span class="label label-danger">Non-work hours only</span>
           <% end %>
         </td>
         <td><%= number_with_delimiter(queue.size) %> </td>
-        <td><% queue_latency = queue.latency %><%= number_with_delimiter(queue_latency.round(2)) %><%= (queue_latency < 60) ? '' : " (#{relative_time(Time.at(Time.now.to_f - queue_latency))})" %> </td>
+        <td>
+          <% queue_latency = queue.latency %><%= number_with_delimiter(queue_latency.round(2)) %><%= (queue_latency < 60) ? '' : " (#{relative_time(Time.at(Time.now.to_f - queue_latency))})" %> </td>
         <td class="delete-confirm">
-          <form action="<%=root_path %>queues/<%= CGI.escape(queue.name) %>" method="post">
+          <form action="<%= root_path %>queues/<%= CGI.escape(queue.name) %>" method="post">
             <%= csrf_tag %>
-            <input class="btn btn-danger btn-xs" type="submit" name="delete" value="<%= t('Delete') %>" data-confirm="<%= t('AreYouSureDeleteQueue', :queue => h(queue.name)) %>" />
-
-            <% if Sidekiq.pro? %>
+            <% if queue.is_non_work_hour_only? %>
+              <input class="btn btn-danger btn-xs" type="submit" name="unset_non_work_hour" value="<%= t('StartExecution') %>" data-confirm="<%= t('AreYouSureUnpauseNonWorkHourQueue', :queue => h(queue.name)) %>"/>
+            <% else %>
+              <input class="btn btn-danger btn-xs" type="submit" name="set_non_work_hour" value="<%= t('PauseTillNonWorkHours') %>" data-confirm="<%= t('AreYouSureNonWorkHourQueue', :queue => h(queue.name)) %>"/>
+            <% end %>
+            <% unless queue.is_non_work_hour_only? %>
               <% if queue.paused? %>
-                <input class="btn btn-danger btn-xs" type="submit" name="unpause" value="<%= t('Unpause') %>" />
+                <input class="btn btn-warning btn-xs" type="submit" name="unpause" value="<%= t('Unpause') %>"/>
               <% else %>
-                <input class="btn btn-danger btn-xs" type="submit" name="pause" value="<%= t('Pause') %>" />
+                <input class="btn btn-warning btn-xs" type="submit" name="pause" value="<%= t('Pause') %>"/>
               <% end %>
             <% end %>
+            <input class="btn btn-danger btn-xs" type="submit" name="delete" value="<%= t('Delete') %>" data-confirm="<%= t('AreYouSureDeleteQueue', :queue => h(queue.name)) %>"/>
           </form>
         </td>
       </tr>
