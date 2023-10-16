@@ -109,7 +109,7 @@ module Sidekiq
         queue.clear
       end
 
-      redirect "#{root_path}queues"
+      redirect "#{root_path}queues/#{route_params[:name]}"
     end
 
     post "/queues/:name/delete" do
