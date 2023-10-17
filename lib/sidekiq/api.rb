@@ -231,8 +231,8 @@ module Sidekiq
     # @return Float
     def latency
       entry = Sidekiq.redis { |conn|
-        conn.lrange(@rname, -1, -1)
-      }.first
+        conn.lindex(@rname, -1)
+      }
       return 0 unless entry
       job = Sidekiq.load_json(entry)
       now = Time.now.to_f
