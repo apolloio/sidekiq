@@ -97,16 +97,17 @@ module Sidekiq
         redirect "#{root_path}queues"
       end
 
+      cookies = request.cookies || {}
       if params['pause']
-        queue.pause!
+        queue.pause!(cookies: cookies)
       elsif params['unpause']
-        queue.unpause!
+        queue.unpause!(cookies: cookies)
       elsif params['set_non_work_hour']
-        queue.set_non_work_hour_only!
+        queue.set_non_work_hour_only!(cookies: cookies)
       elsif params['unset_non_work_hour']
-        queue.unset_non_work_hour_only!
+        queue.unset_non_work_hour_only!(cookies: cookies)
       elsif params['delete']
-        queue.clear
+        queue.clear(cookies: cookies)
       end
 
       redirect "#{root_path}queues/#{route_params[:name]}"
